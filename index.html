@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#007AFF" />
+  <title>FeelAware: 32 Emotions</title>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="data:application/manifest+json,{
+    %22name%22:%22FeelAware%22,
+    %22short_name%22:%22FeelAware%22,
+    %22start_url%22:%22.%22,
+    %22display%22:%22standalone%22,
+    %22background_color%22:%22#f9f9f9%22,
+    %22theme_color%22:%22#007AFF%22,
+    %22icons%22:[{%22src%22:%22https://via.placeholder.com/192%22,%22sizes%22:%22192x192%22},{%22src%22:%22https://via.placeholder.com/512%22,%22sizes%22:%22512x512%22}]
+  }" />
+
+  <!-- Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/vanilla-tilt@1.7.0/dist/vanilla-tilt.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #f9f9f9;
+      --text: #222;
+      --accent: #007AFF;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 16px;
+      line-height: 1.6;
+      min-height: 100vh;
+      overflow-x: hidden;
+      transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    h1 { text-align: center; margin: 20px 0; font-size: 2rem; font-weight: 800; }
+    .subtitle { text-align: center; color: #666; margin-bottom: 24px; font-size: 0.95rem; }
+
+    /* Emotion Wheel - Emoji + Label */
+    #wheel { 
+      display: grid; 
+      grid-template-columns: repeat(4, 1fr); 
+      gap: 16px; 
+      margin: 30px 0; 
+    }
+    .emotion-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: white;
+      border-radius: 18px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+      cursor: pointer;
+      transition: all 0.3s;
+      padding: 12px 8px;
+      text-align: center;
+      font-size: 2.4rem;
+      line-height: 1;
+    }
+    .emotion-btn .label {
+      margin-top: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #333;
+      text-transform: capitalize;
+    }
+    .emotion-btn:active { transform: scale(0.94); }
+
+    /* Report */
+    #report { display: none; margin-top: 30px; animation: fadeIn 0.8s; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+    .card {
+      background: white; padding: 18px; border-radius: 18px; margin: 18px 0; box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+      data-tilt data-tilt-glare data-tilt-max-glare="0.5"
+    }
+    .section h2 { font-size: 1.3rem; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 0.9rem; }
+    th, td { padding: 8px; text-align: left; border-bottom: 1px solid #eee; }
+    th { background: rgba(0,0,0,0.05); }
+
+    #emotionImage { width: 100%; max-width: 320px; border-radius: 18px; margin: 18px auto; display: block; box-shadow: 0 10px 28px rgba(0,0,0,0.2); }
+
+    .map-step {
+      background: linear-gradient(135deg, #f0f9ff, #e0f2fe); padding: 16px; border-radius: 14px; margin: 10px 0;
+      border-left: 5px solid var(--accent); position: relative; transition: all 0.3s; cursor: pointer;
+    }
+    .map-step.done { background: linear-gradient(135deg, #ecfdf5, #d1fae5); border-left-color: #10b981; }
+    .map-step::after { content: 'Checkmark'; position: absolute; right: 14px; top: 14px; opacity: 0; transition: 0.3s; }
+    .map-step.done::after { content: 'Checkmark'; opacity: 1; }
+
+    .share-btn { background: #25D366; color: white; padding: 12px 20px; border-radius: 30px; text-decoration: none; display: inline-block; margin-top: 20px; font-size: 0.95rem; }
+
+    .disclaimer { font-size: 0.75rem; text-align: center; color: #888; margin: 36px 0 20px; }
+
+    /* Particles */
+    #particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
+
+    @media (min-width: 600px) {
+      #wheel { grid-template-columns: repeat(6, 1fr); gap: 20px; }
+      body { padding: 30px; max-width: 700px; margin: 0 auto; }
+      .emotion-btn .label { font-size: 0.82rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>FeelAware</h1>
+  <p class="subtitle">Tap any face. Get help.</p>
+
+  <div id="wheel">
+    <!-- 32 Real Emoji + Clear Labels -->
+    <button class="emotion-btn" data-emotion="anger"><div>Angry Face</div><div class="label">Anger</div></button>
+    <button class="emotion-btn" data-emotion="sadness"><div>Loudly Crying Face</div><div class="label">Sadness</div></button>
+    <button class="emotion-btn" data-emotion="anxiety"><div>Anxious Face with Sweat</div><div class="label">Anxiety</div></button>
+    <button class="emotion-btn" data-emotion="joy"><div>Smiling Face with Heart-Eyes</div><div class="label">Joy</div></button>
+    <button class="emotion-btn" data-emotion="fear"><div>Fearful Face</div><div class="label">Fear</div></button>
+    <button class="emotion-btn" data-emotion="love"><div>Red Heart</div><div class="label">Love</div></button>
+    <button class="emotion-btn" data-emotion="calm"><div>Relieved Face</div><div class="label">Calm</div></button>
+    <button class="emotion-btn" data-emotion="surprise"><div>Face Screaming in Fear</div><div class="label">Surprise</div></button>
+
+    <button class="emotion-btn" data-emotion="boredom"><div>Neutral Face</div><div class="label">Boredom</div></button>
+    <button class="emotion-btn" data-emotion="guilt"><div>Pensive Face</div><div class="label">Guilt</div></button>
+    <button class="emotion-btn" data-emotion="shame"><div>Disappointed Face</div><div class="label">Shame</div></button>
+    <button class="emotion-btn" data-emotion="hope"><div>Smiling Face with Halo</div><div class="label">Hope</div></button>
+    <button class="emotion-btn" data-emotion="gratitude"><div>Smiling Face with Smiling Eyes</div><div class="label">Gratitude</div></button>
+    <button class="emotion-btn" data-emotion="loneliness"><div>Pensive Face</div><div class="label">Loneliness</div></button>
+    <button class="emotion-btn" data-emotion="pride"><div>Smiling Face with Sunglasses</div><div class="label">Pride</div></button>
+    <button class="emotion-btn" data-emotion="envy"><div>Face with Monocle</div><div class="label">Envy</div></button>
+
+    <button class="emotion-btn" data-emotion="frustration"><div>Face with Steam From Nose</div><div class="label">Frustration</div></button>
+    <button class="emotion-btn" data-emotion="confusion"><div>Confused Face</div><div class="label">Confusion</div></button>
+    <button class="emotion-btn" data-emotion="excitement"><div>Grinning Face with Sweat</div><div class="label">Excitement</div></button>
+    <button class="emotion-btn" data-emotion="relief"><div>Relieved Face</div><div class="label">Relief</div></button>
+    <button class="emotion-btn" data-emotion="disappointment"><div>Disappointed Face</div><div class="label">Disappointment</div></button>
+    <button class="emotion-btn" data-emotion="curiosity"><div>Thinking Face</div><div class="label">Curiosity</div></button>
+    <button class="emotion-btn" data-emotion="nervousness"><div>Nervous Face</div><div class="label">Nervousness</div></button>
+    <button class="emotion-btn" data-emotion="contentment"><div>Smiling Face</div><div class="label">Contentment</div></button>
+
+    <button class="emotion-btn" data-emotion="irritation"><div>Angry Face</div><div class="label">Irritation</div></button>
+    <button class="emotion-btn" data-emotion="overwhelm"><div>Exploding Head</div><div class="label">Overwhelm</div></button>
+    <button class="emotion-btn" data-emotion="inspiration"><div>Sparkles</div><div class="label">Inspiration</div></button>
+    <button class="emotion-btn" data-emotion="nostalgia"><div>Pensive Face</div><div class="label">Nostalgia</div></button>
+    <button class="emotion-btn" data-emotion="amusement"><div>Grinning Face</div><div class="label">Amusement</div></button>
+    <button class="emotion-btn" data-emotion="tenderness"><div>Smiling Face with Hearts</div><div class="label">Tenderness</div></button>
+    <button class="emotion-btn" data-emotion="resentment"><div>Face with Symbols on Mouth</div><div class="label">Resentment</div></button>
+    <button class="emotion-btn" data-emotion="serenity"><div>Smiling Face with Halo</div><div class="label">Serenity</div></button>
+  </div>
+
+  <div id="report">
+    <img id="emotionImage" src="" alt="" />
+    <div class="card">
+      <div class="section"><h2>Science</h2><p id="classification"></p></div>
+      <table id="inheritedTable"></table>
+    </div>
+    <div class="card"><div class="section"><h2>Body</h2></div><table id="symptomsTable"></table></div>
+    <div class="card"><div class="section"><h2>Could Be</h2></div><table id="overlapsTable"></table></div>
+    <div class="card"><div class="section"><h2>Food</h2></div><table id="foodsTable"></table></div>
+    <div class="card"><div class="section"><h2>Cope</h2></div><div id="copeSteps"></div></div>
+    <div class="card"><div class="section"><h2>Path to Peace</h2></div><div id="emotionalMap"></div></div>
+    <a href="#" class="share-btn" id="shareBtn">Share Report</a>
+    <p class="disclaimer">Not medical advice. For support, reach out to a professional.</p>
+  </div>
+
+  <canvas id="particles"></canvas>
+
+  <script>
+    const emotions = {
+      anger: { name: "Anger", color: "#ef4444", bg: "#fee2e2", img: "https://images.unsplash.com/photo-1517423738875-5cedd6c5c6df?auto=format&fit=crop&w=600&q=80", classification: "Fight response", inherited: "Survival", learned: "Triggers", symptoms: "Clenched fists • Heat", overlaps: [{o:"Hunger", w:"Low sugar", t:"Eat"}], foodsAvoid: "Caffeine", foodsHelp: "Chocolate", cope: ["Take 10 deep breaths", "Write it out", "Move your body"], sound: "chime" },
+      sadness: { name: "Sadness", color: "#3b82f6", bg: "#dbeafe", img: "https://images.unsplash.com/photo-1502086223501-9a2d0d6e2777?auto=format&fit=crop&w=600&q=80", classification: "Grief", inherited: "Loss", learned: "Coping", symptoms: "Heavy chest • Tears", overlaps: [{o:"Loneliness", w:"Isolation", t:"Connect"}], foodsAvoid: "Alcohol", foodsHelp: "Berries", cope: ["Cry it out", "Call a friend", "Listen to music"], sound: "soft" },
+      anxiety: { name: "Anxiety", color: "#f59e0b", bg: "#fef3c7", img: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80", classification: "Fear system", inherited: "Amygdala", learned: "Worry", symptoms: "Racing heart", overlaps: [{o:"Excitement", w:"Adrenaline", t:"Context"}], foodsAvoid: "Soda", foodsHelp: "Avocado", cope: ["4-7-8 breathing", "Grounding (5-4-3-2-1)", "Write worries"], sound: "pulse" },
+      joy: { name: "Joy", color: "#10b981", bg: "#d1fae5", img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80", classification: "Reward", inherited: "Dopamine", learned: "Gratitude", symptoms: "Warmth • Smile", overlaps: [{o:"Relief", w:"Release", t:"Celebrate"}], foodsAvoid: "None", foodsHelp: "Fruit", cope: ["Share with someone", "Dance it out", "Journal it"], sound: "sparkle" },
+      fear: { name: "Fear", color: "#8b5cf6", bg: "#e9d5ff", img: "https://images.unsplash.com/photo-1573496358961-3c5e0c8e4b5c?auto=format&fit=crop&w=600&q=80", classification: "Threat", inherited: "Survival", learned: "Phobias", symptoms: "Freeze • Goosebumps", overlaps: [{o:"Excitement", w:"Arousal", t:"Breathe"}], foodsAvoid: "Stimulants", foodsHelp: "Tea", cope: ["Name the fear", "Safe place visualization", "Talk to someone"], sound: "echo" },
+      love: { name: "Love", color: "#ec4899", bg: "#fce7f3", img: "https://images.unsplash.com/photo-1516589178581-6c7a87f0e978?auto=format&fit=crop&w=600&q=80", classification: "Bonding", inherited: "Oxytocin", learned: "Attachment", symptoms: "Warmth", overlaps: [{o:"Lust", w:"Physical", t:"Reflect"}], foodsAvoid: "None", foodsHelp: "Cacao", cope: ["Express it", "Hug someone", "Write a note"], sound: "heart" },
+      calm: { name: "Calm", color: "#06b6d4", bg: "#cffafe", img: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80", classification: "Rest", inherited: "Parasympathetic", learned: "Meditation", symptoms: "Slow breath", overlaps: [{o:"Boredom", w:"Low energy", t:"Move"}], foodsAvoid: "None", foodsHelp: "Herbal tea", cope: ["Meditate 5 min", "Nature walk", "Deep breathing"], sound: "wave" },
+      surprise: { name: "Surprise", color: "#f97316", bg: "#fed7aa", img: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=600&q=80", classification: "Alert", inherited: "Startle", learned: "Expectations", symptoms: "Jump", overlaps: [{o:"Fear", w:"Threat?", t:"Assess"}], foodsAvoid: "Caffeine", foodsHelp: "Water", cope: ["Pause and breathe", "Ask questions", "Laugh it off"], sound: "pop" },
+      boredom: { name: "Boredom", color: "#6b7280", bg: "#e5e7eb", img: "https://images.unsplash.com/photo-1506784365847-bbad939e9335?auto=format&fit=crop&w=600&q=80", classification: "Low stimulation", inherited: "Rest", learned: "Routine", symptoms: "Yawn", overlaps: [{o:"Tired", w:"Energy", t:"Nap"}], foodsAvoid: "Sugar", foodsHelp: "Protein", cope: ["Try something new", "Move your body", "Learn a skill"], sound: "yawn" },
+      guilt: { name: "Guilt", color: "#7c3aed", bg: "#e9d5ff", img: "https://images.unsplash.com/photo-1517849845537-4d257902454a?auto=format&fit=crop&w=600&q=80", classification: "Moral", inherited: "Social", learned: "Values", symptoms: "Knot", overlaps: [{o:"Shame", w:"Worth", t:"Forgive"}], foodsAvoid: "Comfort", foodsHelp: "Green tea", cope: ["Apologize if needed", "Learn from it", "Self-compassion"], sound: "sigh" },
+      shame: { name: "Shame", color: "#991b1b", bg: "#fee2e2", img: "https://images.unsplash.com/photo-1517423738875-5cedd6c5c6df?auto=format&fit=crop&w=600&q=80", classification: "Self-worth", inherited: "Social", learned: "Judgment", symptoms: "Hide", overlaps: [{o:"Guilt", w:"Action", t:"Reflect"}], foodsAvoid: "Sugar", foodsHelp: "Nuts", cope: ["Talk to someone", "Challenge the thought", "Self-kindness"], sound: "heavy" },
+      hope: { name: "Hope", color: "#f59e0b", bg: "#fff7ed", img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80", classification: "Future", inherited: "Optimism", learned: "Goals", symptoms: "Warmth", overlaps: [{o:"Joy", w:"Outcome", t:"Plan"}], foodsAvoid: "None", foodsHelp: "Citrus", cope: ["Set a small goal", "Visualize success", "Act on one step"], sound: "light" },
+      gratitude: { name: "Gratitude", color: "#fbbf24", bg: "#fffbeb", img: "https://images.unsplash.com/photo-1502086223501-9a2d0d6e2777?auto=format&fit=crop&w=600&q=80", classification: "Appreciation", inherited: "Reward", learned: "Mindfulness", symptoms: "Warm chest", overlaps: [{o:"Joy", w:"Source", t:"Journal"}], foodsAvoid: "None", foodsHelp: "Nuts", cope: ["Write 3 things", "Say thank you", "Savor the moment"], sound: "bell" },
+      loneliness: { name: "Loneliness", color: "#1e40af", bg: "#dbeafe", img: "https://images.unsplash.com/photo-1502086223501-9a2d0d6e2777?auto=format&fit=crop&w=600&q=80", classification: "Isolation", inherited: "Social", learned: "Connection", symptoms: "Empty", overlaps: [{o:"Sadness", w:"Loss", t:"Reach out"}], foodsAvoid: "Alcohol", foodsHelp: "Omega-3", cope: ["Call someone", "Join a group", "Pet an animal"], sound: "echo" },
+      pride: { name: "Pride", color: "#1d4ed8", bg: "#dbeafe", img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80", classification: "Achievement", inherited: "Status", learned: "Effort", symptoms: "Chest out", overlaps: [{o:"Arrogance", w:"Balance", t:"Humility"}], foodsAvoid: "None", foodsHelp: "Protein", cope: ["Celebrate humbly", "Share credit", "Set next goal"], sound: "fanfare" },
+      envy: { name: "Envy", color: "#16a34a", bg: "#dcfce7", img: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=600&q=80", classification: "Comparison", inherited: "Competition", learned: "Desire", symptoms: "Tight jaw", overlaps: [{o:"Motivation", w:"Use", t:"Channel"}], foodsAvoid: "Sugar", foodsHelp: "Greens", cope: ["Turn into inspiration", "Focus on your path", "Celebrate others"], sound: "whisper" },
+      frustration: { name: "Frustration", color: "#dc2626", bg: "#fee2e2", img: "https://images.unsplash.com/photo-1517423738875-5cedd6c5c6df?auto=format&fit=crop&w=600&q=80", classification: "Blocked goal", inherited: "Drive", learned: "Patience", symptoms: "Tension", overlaps: [{o:"Anger", w:"Intensity", t:"Breathe"}], foodsAvoid: "Caffeine", foodsHelp: "Magnesium", cope: ["Step away", "Break into steps", "Ask for help"], sound: "grit" },
+      confusion: { name: "Confusion", color: "#0d9488", bg: "#ccfbf1", img: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80", classification: "Uncertainty", inherited: "Learning", learned: "Clarity", symptoms: "Frown", overlaps: [{o:"Curiosity", w:"Explore", t:"Ask"}], foodsAvoid: "None", foodsHelp: "Water", cope: ["Ask a question", "Write it down", "Talk it out"], sound: "huh" },
+      excitement: { name: "Excitement", color: "#fb923c", bg: "#fff7ed", img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80", classification: "Anticipation", inherited: "Reward", learned: "Novelty", symptoms: "Butterflies", overlaps: [{o:"Anxiety", w:"Context", t:"Ground"}], foodsAvoid: "Sugar", foodsHelp: "Protein", cope: ["Channel energy", "Plan the event", "Share with someone"], sound: "whoosh" },
+      relief: { name: "Relief", color: "#86efac", bg: "#f0fdf4", img: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80", classification: "Tension release", inherited: "Safety", learned: "Trust", symptoms: "Sigh", overlaps: [{o:"Joy", w:"Outcome", t:"Celebrate"}], foodsAvoid: "None", foodsHelp: "Tea", cope: ["Sigh deeply", "Say 'I'm safe'", "Stretch"], sound: "ahh" },
+      disappointment: { name: "Disappointment", color: "#64748b", bg: "#e2e8f0", img: "https://images.unsplash.com/photo-1502086223501-9a2d0d6e2777?auto=format&fit=crop&w=600&q=80", classification: "Expectation gap", inherited: "Hope", learned: "Reality", symptoms: "Sinking", overlaps: [{o:"Sadness", w:"Loss", t:"Process"}], foodsAvoid: "Comfort", foodsHelp: "Veggies", cope: ["Allow the feeling", "Reframe it", "Find the lesson"], sound: "down" },
+      curiosity: { name: "Curiosity", color: "#6366f1", bg: "#e0e7ff", img: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=600&q=80", classification: "Exploration", inherited: "Learning", learned: "Questions", symptoms: "Wide eyes", overlaps: [{o:"Confusion", w:"Clarity", t:"Research"}], foodsAvoid: "None", foodsHelp: "Nuts", cope: ["Ask 'why?'", "Google it", "Try it out"], sound: "ding" },
+      nervousness: { name: "Nervousness", color: "#84cc16", bg: "#f7fee7", img: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80", classification: "Uncertainty", inherited: "Caution", learned: "Preparation", symptoms: "Fidget", overlaps: [{o:"Excitement", w:"Energy", t:"Channel"}], foodsAvoid: "Caffeine", foodsHelp: "Banana", cope: ["Power pose", "Rehearse", "Breathe"], sound: "tap" },
+      contentment: { name: "Contentment", color: "#fef3c7", bg: "#fffbeb", img: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80", classification: "Satisfaction", inherited: "Enough", learned: "Gratitude", symptoms: "Warm ease", overlaps: [{o:"Calm", w:"Depth", t:"Savor"}], foodsAvoid: "None", foodsHelp: "Balanced meal", cope: ["Savor the moment", "Smile", "Say 'I'm enough'"], sound: "hum" },
+      irritation: { name: "Irritation", color: "#ef4444", bg: "#fee2e2", img: "https://images.unsplash.com/photo-1517423738875-5cedd6c5c6df?auto=format&fit=crop&w=600&q=80", classification: "Minor anger", inherited: "Boundary", learned: "Tolerance", symptoms: "Twitch", overlaps: [{o:"Frustration", w:"Build", t:"Pause"}], foodsAvoid: "Spicy", foodsHelp: "Cool water", cope: ["Count to 10", "Change environment", "Stretch"], sound: "hiss" },
+      overwhelm: { name: "Overwhelm", color: "#475569", bg: "#e2e8f0", img: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80", classification: "Too much", inherited: "Stress", learned: "Boundaries", symptoms: "Freeze", overlaps: [{o:"Anxiety", w:"Load", t:"Prioritize"}], foodsAvoid: "Caffeine", foodsHelp: "Magnesium", cope: ["List 3 tasks", "Say no", "5-min break"], sound: "buzz" },
+      inspiration: { name: "Inspiration", color: "#ec4899", bg: "#fce7f3", img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80", classification: "Creative spark", inherited: "Awe", learned: "Exposure", symptoms: "Tingle", overlaps: [{o:"Excitement", w:"Action", t:"Capture"}], foodsAvoid: "None", foodsHelp: "Fruit", cope: ["Write it down", "Start small", "Share idea"], sound: "spark" },
+      nostalgia: { name: "Nostalgia", color: "#a16207", bg: "#fef3c7", img: "https://images.unsplash.com/photo-1502086223501-9a2d0d6e2777?auto=format&fit=crop&w=600&q=80", classification: "Past memory", inherited: "Bonding", learned: "Reflection", symptoms: "Warm ache", overlaps: [{o:"Sadness", w:"Loss", t:"Cherish"}], foodsAvoid: "None", foodsHelp: "Comfort", cope: ["Look at old photos", "Call a friend", "Journal memory"], sound: "vinyl" },
+      amusement: { name: "Amusement", color: "#fdba74", bg: "#fff7ed", img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80", classification: "Light joy", inherited: "Play", learned: "Humor", symptoms: "Smile", overlaps: [{o:"Joy", w:"Depth", t:"Share"}], foodsAvoid: "None", foodsHelp: "Snack", cope: ["Laugh out loud", "Watch comedy", "Tell a joke"], sound: "giggle" },
+      tenderness: { name: "Tenderness", color: "#f472b6", bg: "#fce7f3", img: "https://images.unsplash.com/photo-1516589178581-6c7a87f0e978?auto=format&fit=crop&w=600&q=80", classification: "Soft love", inherited: "Care", learned: "Empathy", symptoms: "Warm heart", overlaps: [{o:"Love", w:"Depth", t:"Express"}], foodsAvoid: "None", foodsHelp: "Cacao", cope: ["Hug someone", "Say kind words", "Pet an animal"], sound: "soft" },
+      resentment: { name: "Resentment", color: "#991b1b", bg: "#fee2e2", img: "https://images.unsplash.com/photo-1517423738875-5cedd6c5c6df?auto=format&fit=crop&w=600&q=80", classification: "Lingering anger", inherited: "Justice", learned: "Grudge", symptoms: "Bitterness", overlaps: [{o:"Anger", w:"Past", t:"Release"}], foodsAvoid: "Spicy", foodsHelp: "Cooling", cope: ["Write a letter (don’t send)", "Forgive", "Move on"], sound: "growl" },
+      serenity: { name: "Serenity", color: "#7dd3fc", bg: "#f0f9ff", img: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80", classification: "Deep peace", inherited: "Rest", learned: "Acceptance", symptoms: "Stillness", overlaps: [{o:"Calm", w:"Depth", t:"Meditate"}], foodsAvoid: "None", foodsHelp: "Herbal", cope: ["Meditate", "Nature", "Breathe"], sound: "breeze" }
+    };
+
+    // Emotion Selection
+    document.querySelectorAll('.emotion-btn').forEach(btn => {
+      btn.onclick = () => selectEmotion(btn.dataset.emotion);
+    });
+
+    function selectEmotion(emotion) {
+      const e = emotions[emotion];
+      if (!e) return;
+
+      document.body.style.background = e.bg;
+      document.body.style.color = e.color;
+      document.querySelectorAll('.share-btn').forEach(b => b.style.background = e.color);
+
+      const img = document.getElementById('emotionImage');
+      img.src = e.img;
+      img.onerror = () => {
+        img.src = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200'%3E%3Crect width='100%' height='100%' fill='%23f3f4f6'/%3E%3Ctext x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='20' fill='%239ca3af'%3E${emotion.toUpperCase()}%3C/text%3E%3C/svg%3E`;
+      };
+
+      document.getElementById('report').style.display = 'block';
+
+      document.getElementById('classification').innerText = e.classification;
+      document.getElementById('inheritedTable').innerHTML = `<tr><th>Inherited</th><th>Learned</th></tr><tr><td>${e.inherited}</td><td>${e.learned}</td></tr>`;
+      document.getElementById('symptomsTable').innerHTML = `<tr><th>Body Signals</th></tr><tr><td>${e.symptoms}</td></tr>`;
+      document.getElementById('overlapsTable').innerHTML = `<tr><th>Might Be</th><th>Why</th><th>Check</th></tr>` +
+        e.overlaps.map(o => `<tr><td>${o.o}</td><td>${o.w}</td><td>${o.t}</td></tr>`).join('');
+      document.getElementById('foodsTable').innerHTML = `<tr><th>Avoid</th><th>Eat</th></tr><tr><td>${e.foodsAvoid}</td><td>${e.foodsHelp}</td></tr>`;
+
+      const copeDiv = document.getElementById('copeSteps');
+      copeDiv.innerHTML = '';
+      e.cope.forEach(step => {
+        const div = document.createElement('div');
+        div.className = 'map-step';
+        div.innerHTML = `<strong>Cope:</strong> ${step}`;
+        copeDiv.appendChild(div);
+      });
+
+      const map = document.getElementById('emotionalMap');
+      map.innerHTML = '';
+      ['Acknowledge', 'Accept', 'Act', 'Integrate'].forEach((step, i) => {
+        const div = document.createElement('div');
+        div.className = 'map-step';
+        div.innerHTML = `<strong>${step}</strong><br>${
+          i===0 ? `Name it: "${emotion}"` :
+          i===1 ? 'This will pass' :
+          i===2 ? 'Breathe deeply' :
+          'What did I learn?'
+        }`;
+        div.onclick = () => {
+          div.classList.add('done');
+          new Audio(`https://assets.mixkit.co/sfx/preview/mixkit-${e.sound || 'chime'}-sound-1.mp3`).play();
+          if (i === 3) setTimeout(() => confetti({particleCount: 150, spread: 90, origin: { y: 0.6 }}), 400);
+        };
+        map.appendChild(div);
+      });
+
+      document.getElementById('shareBtn').onclick = (ev) => {
+        ev.preventDefault();
+        const text = `I'm feeling ${emotion} — exploring with FeelAware! Try it: ${location.href}`;
+        if (navigator.share) navigator.share({title: 'FeelAware', text, url: location.href});
+        else alert("Share: " + text);
+      };
+
+      startParticles(e.color);
+    }
+
+    function startParticles(color) {
+      const canvas = document.getElementById('particles');
+      const ctx = canvas.getContext('2d');
+      canvas.width = innerWidth; canvas.height = innerHeight;
+      const particles = [];
+      for (let i = 0; i < 70; i++) {
+        particles.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          r: Math.random() * 3 + 1,
+          d: Math.random() * 70,
+          color: color + '60'
+        });
+      }
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fillStyle = p.color;
+          ctx.fill();
+          p.x += Math.sin(p.d) * 0.7;
+          p.y += Math.cos(p.d) * 0.7;
+          if (p.x < 0 || p.x > canvas.width) p.d = -p.d;
+          if (p.y < 0 || p.y > canvas.height) p.d = -p.d;
+        });
+        requestAnimationFrame(draw);
+      }
+      draw();
+    }
+
+    document.querySelectorAll('.card').forEach(card => {
+      VanillaTilt.init(card, { max: 15, speed: 400, glare: true, "max-glare": 0.5 });
+    });
+  </script>
+</body>
+</html>
