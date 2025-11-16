@@ -1,347 +1,112 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Internal Thermostat Check</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Input Title Background Imgur Test</title>
+    
+    <style>
+        /* CSS to make the video full-screen and position the content on top */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden; 
+            font-family: sans-serif;
+        }
 
-  <!-- Tailwind -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
-          animation: { fadeIn: 'fadeIn .4s ease-out forwards' },
-          keyframes: { fadeIn: { '0%': { opacity:0, transform:'translateY(8px)' }, '100%': { opacity:1, transform:'translateY(0)' } } },
-        },
-      },
-    };
-  </script>
+        .video-container {
+            position: relative;
+            width: 100vw; 
+            height: 100vh; 
+            overflow: hidden;
+        }
 
-  <!-- Inter -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+        #background-video {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            min-width: 100%;
+            min-height: 100%;
+            z-index: 1; 
+            object-fit: cover;
+        }
 
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+        .content-overlay {
+            position: absolute; 
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10; 
+            
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            
+            color: white; 
+            text-align: center;
+            
+            background-color: rgba(0, 0, 0, 0.4); 
+            padding: 20px;
+        }
+        
+        /* Styles for the large title input box */
+        #title-input {
+            padding: 15px;
+            margin-bottom: 20px;
+            width: 80%; 
+            max-width: 500px;
+            font-size: 2em; 
+            text-align: center;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            background-color: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Existing input and button styles */
+        .content-overlay p {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
 
-  <style>
-    body {
-      background: linear-gradient(-45deg, #1e3a8a, #1e40af, #3b82f6, #60a5fa);
-      background-size: 400% 400%;
-      animation: gradientShift 18s ease infinite;
-      min-height: 100vh;
-    }
-    @keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
-
-    .glass { background: rgba(255,255,255,.13); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-             border: 1px solid rgba(255,255,255,.25); box-shadow: 0 8px 32px rgba(0,0,0,.15); }
-    #resultArea { opacity:0; }
-    .chart-glow { filter: drop-shadow(0 0 12px rgba(59,130,246,.4)); }
-    .copy-btn:hover { background:#2563eb; }
-
-    select option { background:#fff !important; color:#1f2937 !important; }
-    select option:checked { background:#dbeafe !important; color:#1e40af !important; }
-
-    .intensity-bar {
-      height: 8px; border-radius: 4px;
-      background: linear-gradient(to right, #ef4444, #f97316, #eab308, #22c55e);
-      transition: width 0.3s ease;
-    }
-  </style>
+        .content-overlay input[type="text"] {
+            padding: 10px;
+            margin: 10px 0;
+            width: 250px;
+            border: none;
+            border-radius: 5px;
+        }
+        
+        .content-overlay button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
 </head>
-
-<body class="flex items-center justify-center p-4">
-
-<div id="app" class="glass w-full max-w-xl rounded-3xl p-6 sm:p-8 text-white">
-
-  <!-- Dark-mode toggle -->
-  <div class="flex justify-end mb-2">
-    <button id="themeToggle" class="p-2 rounded-full bg-white/20 hover:bg-white/30 transition">
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 3v1m0 16v1m8.66-8.66h-1M4.34 12h-1m15.36 5.36l-.7-.7M6.34 6.34l-.7-.7m12.02 0l-.7.7M6.34 17.66l-.7.7M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
-    </button>
-  </div>
-
-  <header class="text-center mb-7">
-    <h1 class="text-3xl sm:text-4xl font-extrabold drop-shadow-md">Internal Thermostat Check</h1>
-    <p class="mt-2 text-lg opacity-90">
-      Classify your current state: <span class="font-bold text-yellow-300">Regulation</span> (Inherited) or
-      <span class="font-bold text-emerald-300">Retraining</span> (Learned).
-    </p>
-  </header>
-
-  <!-- Quick Input -->
-  <div class="mb-6 pb-5 border-b border-white/30">
-    <label for="quickSelect" class="block text-sm font-medium mb-2">Quick Input: Jump-start with a scenario</label>
-    <select id="quickSelect"
-            class="w-full p-3 bg-white/15 border border-white/30 rounded-xl text-white placeholder-white/50 focus:ring-2 focus:ring-white/50 focus:border-white/70 transition backdrop-blur-sm">
-      <option value="">-- Select a feeling scenario --</option>
-      <!-- Inherited -->
-      <option value="I have a frantic, rapid heart rate after getting an exciting email.">Frantic Excitement (Inherited)</option>
-      <option value="I'm really mad and anxious because I missed the deadline.">Anger/Anxiety (Inherited)</option>
-      <option value="My heart is pounding and I feel a surge of energy before a big presentation.">Pre-Performance Rush (Inherited)</option>
-      <option value="I feel a sudden wave of fear when I hear a loud noise.">Startle Response (Inherited)</option>
-      <option value="I'm shaking with adrenaline after narrowly avoiding an accident.">Fight-or-Flight (Inherited)</option>
-      <option value="I feel a burst of joy and energy when I win a game.">Euphoric Win (Inherited)</option>
-      <option value="I'm trembling with rage after someone cut me off in traffic.">Road Rage (Inherited)</option>
-      <option value="I feel a jolt of panic when I realize I forgot something important.">Panic Spike (Inherited)</option>
-
-      <!-- Learned -->
-      <option value="I feel deep shame and loathing after remembering something embarrassing from high school.">Shame/Loathing (Learned)</option>
-      <option value="I feel profound sadness and despair due to a friendship ending.">Sadness/Despair (Learned)</option>
-      <option value="I feel worthless and like a failure after getting criticism at work.">Self-Worth Crash (Learned)</option>
-      <option value="I feel overwhelming guilt for saying no to a favor.">Guilt Spiral (Learned)</option>
-      <option value="I feel jealous and bitter when I see someone else's success.">Envy Burn (Learned)</option>
-      <option value="I feel embarrassed and want to hide after tripping in public.">Social Embarrassment (Learned)</option>
-      <option value="I feel empty and numb after a long period of stress.">Emotional Burnout (Learned)</option>
-      <option value="I feel proud but also anxious that I don't deserve my achievement.">Imposter Pride (Learned)</option>
-    </select>
-  </div>
-
-  <!-- Textarea -->
-  <div class="mb-6">
-    <label for="emotionInput" class="block text-sm font-medium mb-2">Describe the feeling:</label>
-    <textarea id="emotionInput" rows="4"
-              class="w-full p-3 bg-white/15 border border-white/30 rounded-xl text-white placeholder-white/50 focus:ring-2 focus:ring-white/50 focus:border-white/70 transition backdrop-blur-sm resize-none"
-              placeholder="Type your current emotional spike here..."></textarea>
-  </div>
-
-  <!-- Intensity Slider -->
-  <div class="mb-6">
-    <label for="intensity" class="block text-sm font-medium mb-2">How intense is this feeling?</label>
-    <div class="flex items-center space-x-3">
-      <span class="text-xs text-white/70">1</span>
-      <input type="range" id="intensity" min="1" max="10" value="5"
-             class="flex-1 h-2 bg-white/20 rounded-lg appearance-none cursor-pointer">
-      <span class="text-xs text-white/70">10</span>
+<body>
+    <div class="video-container">
+        <video autoplay muted loop playsinline controls id="background-video">
+            <source src="https://i.imgur.com/6a4tLZO.mp4" type="video/mp4"> 
+            Your browser does not support the video tag.
+        </video>
+        
+        <div class="content-overlay">
+            <input type="text" id="title-input" placeholder="Enter Your Title Here">
+            
+            <p>Enter your details below:</p>
+            <input type="text" placeholder="Your input here">
+            <button>Submit</button>
+        </div>
     </div>
-    <div class="flex justify-between mt-1 text-xs">
-      <span class="text-white/60">Mild</span>
-      <span id="intensityLabel" class="font-semibold text-yellow-300">Moderate</span>
-      <span class="text-white/60">Overwhelming</span>
-    </div>
-    <div class="mt-2 h-2 bg-white/10 rounded-full overflow-hidden">
-      <div id="intensityBar" class="intensity-bar w-1/2"></div>
-    </div>
-  </div>
-
-  <!-- Analyze -->
-  <button id="analyzeButton"
-          class="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl shadow-lg hover:from-blue-700 hover:to-indigo-700 transition transform hover:scale-[1.02] focus:outline-none focus:ring-4 focus:ring-white/50">
-    Analyze & Find Off-Switch
-  </button>
-
-  <!-- Result -->
-  <div id="resultArea"
-       class="mt-8 p-5 bg-white/10 rounded-xl border-t-4 border-white/30 backdrop-blur-sm text-center">
-    <p class="text-lg font-semibold">Awaiting input...</p>
-  </div>
-
-  <!-- Loading -->
-  <div id="loading" class="hidden text-center mt-6">
-    <svg class="animate-spin h-6 w-6 text-white mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-      <path class="opacity-75" fill="currentColor"
-            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-    </svg>
-  </div>
-
-  <!-- Disclaimer -->
-  <p class="text-xs text-white/60 text-center mt-8 italic">
-    *This tool is for personal reflection only and is not medical advice.
-  </p>
-</div>
-
-<script>
-/* ---------- ELEMENTS ---------- */
-const input          = document.getElementById('emotionInput');
-const quick          = document.getElementById('quickSelect');
-const btn            = document.getElementById('analyzeButton');
-const result         = document.getElementById('resultArea');
-const loading        = document.getElementById('loading');
-const themeBtn       = document.getElementById('themeToggle');
-const intensity      = document.getElementById('intensity');
-const intensityLabel = document.getElementById('intensityLabel');
-const intensityBar   = document.getElementById('intensityBar');
-
-let chart = null;
-
-/* ---------- INTENSITY LABELS ---------- */
-const intensityLabels = [
-  'Barely Noticeable','Mild','Moderate','Strong','Very Strong',
-  'Intense','Very Intense','Severe','Extreme','Overwhelming'
-];
-
-/* ---------- UPDATE INTENSITY UI ---------- */
-intensity.addEventListener('input', () => {
-  const val = intensity.value;
-  intensityLabel.textContent = intensityLabels[val - 1];
-  intensityBar.style.width = `${val * 10}%`;
-  intensityLabel.className = val <= 3 ? 'font-semibold text-green-300' :
-                            val <= 6 ? 'font-semibold text-yellow-300' :
-                                       'font-semibold text-red-300';
-});
-
-/* ---------- KEYWORDS ---------- */
-const INHERITED = ['excited','feverish','racing','rapid','mad','anger','anxious','frantic','panic','adrenaline','urge','fear','pounding','surge','energy','startle','shaking','trembling','rage','jolt','burst','win','euphoric','rush'];
-const LEARNED   = ['shame','guilt','hate','loathing','cry','tears','uncomfortable','worthless','despair','sadness','disappointment','pride','jealousy','embarrassment','failure','criticism','bitter','envy','hide','numb','burnout','imposter','empty','overwhelm'];
-
-/* ---------- CLASSIFY ---------- */
-function classify(txt){
-  const t = txt.toLowerCase();
-  if (INHERITED.some(w=>t.includes(w))) return 'Inherited';
-  if (LEARNED.some(w=>t.includes(w)))   return 'Learned';
-  return 'Unclear';
-}
-
-/* ---------- FULL GUIDANCE (fixed – only one declaration) ---------- */
-const GUIDANCE = {
-  Inherited: {
-    title: "INHERITED EMOTION (Requires Regulation)",
-    color: "border-red-500",
-    why: "These are 'survival mode' emotions (e.g., your quick excitement or anger). You cannot remove them, but you can change the physical response they generate. The goal is to immediately slow your physical system.",
-    actions: [
-      "**The Breathing Brake:** Close your eyes. Focus on paced breathing (4 seconds in, 6 seconds out). This is your non-stimulant 'off-switch' to slow the heart rate.",
-      "**Body Check:** Tighten every muscle for 10 seconds, then release. This physical tension and release signals safety to your nervous system.",
-      "**5-4-3-2-1 Grounding:** Name 5 things you see, 4 things you touch, 3 things you hear, 2 things you smell, and 1 thing you taste. Immediate immersion in the physical environment."
-    ],
-    diet: ["**Blood Sugar Stability:** Eat a balanced snack (protein + fiber). Stable blood sugar prevents sharp energy spikes that mimic anxiety.", "**Magnesium Boost:** Focus on magnesium-rich foods to help relax the nervous system."],
-    exercise: ["**Adrenaline Burn:** Perform 30 seconds of high-intensity activity (e.g., fast running in place).", "**Rhythmic Movement:** Engage in steady, rhythmic exercise (walking, swimming)."],
-    longTerm: "Commit to daily 10-minute meditation. This builds the muscle needed to activate the 'off-switch' when you need it most, even when you forget."
-  },
-  Learned: {
-    title: "LEARNED EMOTION (Requires Retraining)",
-    color: "border-green-500",
-    why: "These are patterned, often guilt or shame-based, responses rooted in past events (like the 'Kindness Paradox' tears). The goal is to reframe the narrative and channel the energy.",
-    actions: [
-      "**The Confessional Release:** Write a non-judgmental journal entry about the feeling. Structure the chaos to take away its power (like your past CBT/confessional tool).",
-      "**Channel the Current:** If the emotion is high-energy, immediately divert the flow into a creative project: outlining a book, writing a song lyric, or sketching an idea.",
-      "**Fact vs. Feeling:** Ask: 'Is this a fact, or is it a feeling?' Remind yourself that feelings are temporary states, not eternal truths."
-    ],
-    diet: ["**Omega-3s for Mood:** Increase intake of Omega-3 rich foods (walnuts, chia seeds) to support brain health.", "**Hydration Priority:** Consistent water intake throughout the day as dehydration compounds feelings of worthlessness."],
-    exercise: ["**Mindful Movement:** Practice Yoga or Tai Chi to focus on the mind-body connection.", "**Tension Release:** Gentle stretching, especially neck and shoulders, to release physical manifestations of shame/guilt."],
-    longTerm: "Develop a creative habit (e.g., daily writing or music practice). This gives your high emotional energy a sustainable, non-destructive outlet."
-  },
-  Unclear: {
-    title: "UNCLEAR STATE",
-    color: "border-gray-400",
-    why: "The clearer the input, the clearer the action. Be specific about the physical sensation (rapid heart rate, tightness) or the cognitive trigger (shame, excitement).",
-    actions: ["Re-read the prompt and focus on the physical symptoms.", "Try to describe the feeling using one of the keyword categories (e.g., 'excited' or 'loathing')."],
-    diet: ["Focus on whole, unprocessed foods."],
-    exercise: ["Take a 10-minute walk outside."],
-    longTerm: "Start a simple emotion log to identify recurrent triggers."
-  }
-};
-
-/* ---------- RENDER HELPERS ---------- */
-function list(title, items){
-  if (!items?.length) return '';
-  return `<h3 class="font-semibold mt-5 border-b border-white/30 pb-1">${title}:</h3>
-          <ul class="list-none space-y-2 mt-2">
-            ${items.map(i=>`<li class="flex text-sm"><span class="mr-2 text-yellow-300">•</span>${i}</li>`).join('')}
-          </ul>`;
-}
-
-function getIntensityLabel(val) {
-  if (val <= 3) return { text: "Low-Intensity", color: "text-green-300" };
-  if (val <= 7) return { text: "Moderate-Intensity", color: "text-yellow-300" };
-  return { text: "High-Intensity", color: "text-red-300" };
-}
-
-function renderResult(type){
-  const g = GUIDANCE[type] || GUIDANCE.Unclear;   // fallback
-  const intensityVal = intensity.value;
-  const { text: intText, color: intColor } = getIntensityLabel(intensityVal);
-
-  result.className = `mt-8 p-5 bg-white/15 rounded-xl border-t-4 ${g.color} backdrop-blur-sm opacity-0 animate-fadeIn`;
-
-  const chartHTML = type!=='Unclear' ? `<div class="mt-5 h-56 chart-glow"><canvas id="chartCanvas"></canvas></div>` : '';
-
-  result.innerHTML = `
-    <p class="text-center text-xl font-bold mb-1">${g.title}</p>
-    <p class="text-center text-lg ${intColor} font-semibold mb-3">${intText} (${intensityVal}/10)</p>
-    <p class="text-sm italic mb-4">${g.why}</p>
-    ${chartHTML}
-    ${list('Immediate Actions (choose one)', g.actions)}
-    ${list('Diet & Supplement Support', g.diet)}
-    ${list('Movement & Exercise', g.exercise)}
-    <div class="mt-5 p-3 bg-white/10 rounded-lg text-sm">
-      <strong>Long-Term Strategy:</strong> ${g.longTerm}
-    </div>
-    <button id="copyResult" class="copy-btn mt-4 w-full py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">
-      Copy Result to Clipboard
-    </button>
-  `;
-
-  document.getElementById('copyResult')?.addEventListener('click', () => {
-    const txt = result.innerText.replace(/Copy Result to Clipboard/g,'');
-    navigator.clipboard.writeText(txt).then(() => alert('Copied!'));
-  });
-
-  if (type!=='Unclear'){
-    setTimeout(() => {
-      const ctx = document.getElementById('chartCanvas')?.getContext('2d');
-      if (!ctx) return;
-      if (chart) chart.destroy();
-      const data = type==='Inherited' ? [85,15] : [15,85];
-      const colors = type==='Inherited' ? ['#ef4444','#22c55e'] : ['#6366f1','#fb923c'];
-      chart = new Chart(ctx, {
-        type:'doughnut',
-        data:{ labels:['Inherited','Learned'], datasets:[{ data, backgroundColor:colors, borderColor:'#fff', borderWidth:2, hoverOffset:12 }] },
-        options:{ responsive:true, plugins:{legend:{position:'bottom',labels:{color:'#fff',font:{size:13}}}} }
-      });
-    }, 120);
-  }
-
-  setTimeout(() => result.classList.remove('opacity-0'), 50);
-}
-
-/* ---------- ANALYSIS ---------- */
-async function analyze(){
-  const text = (input.value.trim() || quick.value || '').trim();
-  if (!text || text.length < 3){
-    result.innerHTML = `<p class="text-center text-lg font-semibold">Please describe your feeling in more detail.</p>`;
-    result.className = 'mt-8 p-5 bg-white/10 rounded-xl border-t-4 border-white/30 backdrop-blur-sm opacity-100';
-    return;
-  }
-
-  loading.classList.remove('hidden');
-  btn.disabled = true;
-  result.innerHTML = '';
-
-  await new Promise(r => setTimeout(r, 450));
-
-  const type = classify(text);
-  renderResult(type);
-
-  loading.classList.add('hidden');
-  btn.disabled = false;
-}
-
-/* ---------- EVENTS ---------- */
-btn.addEventListener('click', analyze);
-input.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); analyze(); } });
-quick.addEventListener('change', e => {
-  if (e.target.value) {
-    input.value = e.target.value;
-    analyze();
-    e.target.value = '';
-  }
-});
-
-/* ---------- DARK MODE ---------- */
-themeBtn.addEventListener('click', () => {
-  document.documentElement.classList.toggle('dark');
-  const isDark = document.documentElement.classList.contains('dark');
-  themeBtn.innerHTML = isDark
-    ? `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>`
-    : `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 3v1m0 16v1m8.66-8.66h-1M4.34 12h-1m15.36 5.36l-.7-.7M6.34 6.34l-.7-.7m12.02 0l-.7.7M6.34 17.66l-.7.7M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>`;
-});
-
-/* ---------- INIT INTENSITY ---------- */
-intensity.dispatchEvent(new Event('input'));
-</script>
-
 </body>
 </html>
