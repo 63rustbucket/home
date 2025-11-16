@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Work Hours Tracker</title>
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+  body {
+    background: #111;
+    color: #eee;
+    font-family: 'Inter', sans-serif;
+    padding: 20px;
+    text-align: center;
+  }
+  .card {
+    background: #1c1c1c;
+    padding: 25px;
+    border-radius: 20px;
+    max-width: 450px;
+    margin: auto;
+    box-shadow: 0 0 20px rgba(0,0,0,0.4);
+  }
+  .big-btn {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    font-size: 1.8rem;
+    font-weight: bold;
+    background: #4caf50;
+    color: white;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    margin: 8px;
+    cursor: pointer;
+  }
+  .report-box {
+    background: #222;
+    padding: 15px;
+    border-radius: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+    margin-top: 15px;
+  }
+</style>
+
+</head>
+<body>
+
+<div class="card">
+
+  <h1 id="title" class="text-3xl font-bold mb-4">How many hours did you work?</h1>
+
+  <!-- INPUT AREA -->
+  <div id="input-area">
+
+    <div>
+      <button class="big-btn" onclick="addHours(0)">0</button>
+      <button class="big-btn" onclick="addHours(2)">2</button>
+      <button class="big-btn" onclick="addHours(4)">4</button>
+      <button class="big-btn" onclick="addHours(6)">6</button>
+      <button class="big-btn" onclick="addHours(8)">8</button>
+    </div>
+
+    <div class="mt-6">
+      <input id="customHours" type="number" class="p-2 text-black rounded"
+             placeholder="Custom" step="0.5">
+      <button class="ml-3 px-4 py-2 bg-blue-500 text-white rounded"
+              onclick="addCustom()">Add</button>
+    </div>
+  </div>
+
+  <!-- REPORT AREA -->
+  <div id="report-area" style="display:none;">
+    <h2 class="text-2xl font-bold mt-2">Total Hours</h2>
+    <p id="total" class="text-4xl font-extrabold text-green-400"></p>
+
+    <div class="report-box" id="historyList"></div>
+
+    <button class="mt-6 px-4 py-2 bg-gray-600 text-white rounded"
+            onclick="goBack()">Back</button>
+  </div>
+
+</div>
+
+<script>
+  let records = JSON.parse(localStorage.getItem("workHoursRecords") || "[]");
+
+  function saveRecords() {
+    localStorage.setItem("workHoursRecords", JSON.stringify(records));
+  }
+
+  function addHours(h) {
+    // 0 hours → go directly to report view
+    if (h === 0) {
+      showReport();
+      return;
+    }
+
+    const entry = {
+      hours: h,
+      time: new Date().toLocaleString()
+    };
+
+    records.unshift(entry);
+    saveRecords();
+
+    showReport();
+  }
+
+  function addCustom() {
+    const val = parseFloat(document.getElementById("customHours").value);
+
+    if (!isNaN(val) && val >= 0) {
+      addHours(val);
+      document.getElementById("customHours").value = "";
+    }
+  }
+
+  function showReport() {
+    document.getElementById("input-area").style.display = "none";
+    document.getElementById("title").style.display = "none";
+    document.getElementById("report-area").style.display = "block";
+
+    let total = records.reduce((sum, r) => sum + r.hours, 0);
+    document.getElementById("total").textContent = total.toFixed(1);
+
+    const list = document.getElementById("historyList");
+    list.innerHTML = "";
+
+    records.forEach(r => {
+      let item = document.createElement("div");
+      item.className = "text-left bg-[#333] p-2 rounded mb-2";
+      item.innerHTML = `<strong>+${r.hours} hrs</strong> — <span class="text-gray-400">${r.time}</span>`;
+      list.appendChild(item);
+    });
+  }
+
+  function goBack() {
+    document.getElementById("report-area").style.display = "none";
+    document.getElementById("input-area").style.display = "block";
+    document.getElementById("title").style.display = "block";
+  }
+</script>
+
+</body>
+</html>
